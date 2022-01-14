@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["mongoDb"]
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String    @id @default(dbgenerated()) @map("_id") @db.ObjectId
+  name     String
+  email    String    @unique
+  // one-to-many (back-relation)
+  posts    Post[]
+  // one-to-one (back-relation)
+  customer Customer?
+}
+
+model Customer {
+  id        String @id @default(dbgenerated()) @map("_id") @db.ObjectId
+  stripe_id String @unique
+  // one-to-one
+  user      User   @relation(fields: [user_id], references: [id])
+  user_id   String @unique @db.ObjectId
+}
+
+model Post {
+  id           String     @id @default(dbgenerated()) @map("_id") @db.ObjectId
+  title        String
+  // one-to-many
+  user         User       @relation(fields: [user_id], references: [id])
+  user_id      String
+  // many-to-many
+  categories   Category[] @relation(fields: [category_ids], references: [id])
+  category_ids String[]   @db.Array(ObjectId)
+}
+
+model Category {
+  id       String   @id @default(dbgenerated()) @map("_id") @db.ObjectId
+  name     String   @unique
+  // many-to-many
+  posts    Post[]   @relation(fields: [post_ids], references: [id])
+  post_ids String[] @db.Array(ObjectId)
+}
